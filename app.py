@@ -32,80 +32,14 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Main layout */
-    .main .block-container { padding-top: 1.5rem; padding-bottom: 2rem; max-width: 1400px; }
-
-    /* Metric cards */
-    [data-testid="metric-container"] {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px;
-        padding: 1rem;
-    }
-    [data-testid="metric-container"] [data-testid="stMetricValue"] {
-        font-size: 1.6rem;
-        font-weight: 700;
-    }
-
-    /* Section headers */
-    .section-header {
-        font-size: 1rem;
-        font-weight: 600;
-        color: rgba(255,255,255,0.75);
-        border-bottom: 2px solid rgba(255,255,255,0.12);
-        padding-bottom: 6px;
-        margin-bottom: 1rem;
-        margin-top: 1.5rem;
-    }
-
-    /* Info box */
-    .info-box {
-        background: #e8f4fd;
-        border-left: 4px solid #1f77b4;
-        border-radius: 4px;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
-        margin: 0.5rem 0;
-        color: #1a1a2e !important;
-    }
-    .info-box * { color: #1a1a2e !important; }
-
-    /* Warning box */
-    .warn-box {
-        background: #fff8e1;
-        border-left: 4px solid #ff9800;
-        border-radius: 4px;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
-        margin: 0.5rem 0;
-        color: #1a1a2e !important;
-    }
-    .warn-box * { color: #1a1a2e !important; }
-
-    /* Tag badges */
-    .badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin: 2px;
-    }
-    .badge-green  { background: #d4edda; color: #155724; }
-    .badge-red    { background: #f8d7da; color: #721c24; }
-    .badge-yellow { background: #fff3cd; color: #856404; }
-    .badge-blue   { background: #d1ecf1; color: #0c5460; }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] { background: #1a1a2e; }
-    [data-testid="stSidebar"] * { color: #e8e8e8 !important; }
-    [data-testid="stSidebar"] .stSelectbox label,
-    [data-testid="stSidebar"] .stMultiSelect label,
-    [data-testid="stSidebar"] .stNumberInput label,
-    [data-testid="stSidebar"] .stSlider label { color: #adb5bd !important; font-size: 0.85rem; }
-
-    /* Footer */
-    .footer { text-align: center; color: #adb5bd; font-size: 0.8rem; margin-top: 3rem; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+html, body, [class*="css"]  {
+    font-family: 'Inter', sans-serif !important;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Clash Display', sans-serif !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,8 +95,16 @@ def fetch_prices(tickers: tuple, start: str, end: str) -> pd.DataFrame:
         progress=False,
         threads=True,
     )
+    if data.empty:
+        return pd.DataFrame()
+        
     if isinstance(data.columns, pd.MultiIndex):
-        close = data["Close"]
+        if "Close" in data.columns.get_level_values(0):
+            close = data["Close"]
+        elif "Close" in data.columns.get_level_values(1):
+            close = data.xs("Close", level=1, axis=1)
+        else:
+            close = data
     else:
         close = data[["Close"]] if "Close" in data.columns else data
     close = close.dropna(how="all")
@@ -412,6 +354,7 @@ def monte_carlo_var(returns: pd.Series, conf: float, horizon: int, n_sim: int = 
     return {"var_pct": var_pct, "cvar_pct": cvar_pct, "sim": sim_cumulative}
 
 
+@st.cache_data(show_spinner=False)
 def portfolio_var(returns: pd.DataFrame, weights: np.ndarray, conf: float, horizon: int) -> dict:
     """Portfolio VaR using correlation matrix."""
     mu_vec = returns.mean().values
@@ -556,14 +499,16 @@ def plot_distribution(returns: pd.Series, var_pct: float, cvar_pct: float,
             showlegend=True,
         ), secondary_y=False)
 
-    # VaR cutoff line
+    # Glowing VaR cutoff line
+    fig.add_vline(x=cutoff, line_color="rgba(214,39,40,0.15)", line_width=10, layer="below")
+    fig.add_vline(x=cutoff, line_color="rgba(214,39,40,0.3)", line_width=5, layer="below")
     fig.add_vline(
         x=cutoff,
         line_dash="dash",
         line_color=COLORS["danger"],
-        line_width=2,
+        line_width=2.5,
         annotation_text=f"  VaR cutoff<br>  {cutoff*100:.2f}%",
-        annotation_font=dict(color=COLORS["danger"], size=12),
+        annotation_font=dict(color=COLORS["danger"], size=13),
         annotation_position="top right",
     )
 
@@ -696,10 +641,13 @@ def plot_mc_histogram(sim: np.ndarray, var_pct: float, cvar_pct: float,
         opacity=0.6,
         name="Simulated returns",
     ))
+    # Glowing VaR cutoff line
+    fig.add_vline(x=cutoff, line_color="rgba(214,39,40,0.15)", line_width=10, layer="below")
+    fig.add_vline(x=cutoff, line_color="rgba(214,39,40,0.3)", line_width=5, layer="below")
     fig.add_vline(x=cutoff, line_color=COLORS["danger"], line_dash="dash",
-                  line_width=2,
+                  line_width=2.5,
                   annotation_text=f"  VaR {cutoff*100:.2f}%",
-                  annotation_font_color=COLORS["danger"])
+                  annotation_font=dict(color=COLORS["danger"], size=13))
     fig.add_vline(x=-cvar_pct, line_color=COLORS["warning"], line_dash="dot",
                   line_width=1.5,
                   annotation_text=f"  CVaR {-cvar_pct*100:.2f}%",
@@ -853,7 +801,7 @@ with st.sidebar:
     lookback_label = st.selectbox("Historical lookback", list(lookback_opts.keys()), index=0)
     lookback_days = lookback_opts[lookback_label]
 
-    rf_default = 5.0 if country == "India (NSE)" else 4.0
+    rf_default = 6.5 if country == "India (NSE)" else 4.0
     risk_free_rate = st.number_input(
         "Risk-free rate (%)",
         min_value=0.0,
@@ -1030,8 +978,15 @@ end_date   = datetime.today()
 start_date = end_date - timedelta(days=int(lookback_days * 1.4))  # buffer for weekends/holidays
 
 with st.spinner("Fetching price data from Yahoo Finance…"):
+    benchmark_ticker = "^NSEI" if country == "India (NSE)" else "^GSPC"
+    tickers_to_fetch = list(tickers_with_suffix)
+    benchmark_added = False
+    if benchmark_ticker not in tickers_to_fetch:
+        tickers_to_fetch.append(benchmark_ticker)
+        benchmark_added = True
+
     prices_raw = fetch_prices(
-        tuple(tickers_with_suffix),
+        tuple(tickers_to_fetch),
         start_date.strftime("%Y-%m-%d"),
         end_date.strftime("%Y-%m-%d"),
     )
@@ -1041,17 +996,24 @@ if prices_raw is None or prices_raw.empty:
     st.error("No data returned. Check ticker symbols or try a different date range.")
     st.stop()
 
+if isinstance(prices_raw.columns, pd.MultiIndex):
+    # In case it wasn't flattened, try to find the level with tickers
+    level = 1 if len(set(tickers_to_fetch).intersection(prices_raw.columns.get_level_values(1))) > 0 else 0
+    prices_raw.columns = prices_raw.columns.get_level_values(level)
+
+if benchmark_ticker in prices_raw.columns:
+    benchmark_prices = prices_raw[benchmark_ticker].copy()
+    if benchmark_added:
+        prices_raw = prices_raw.drop(columns=[benchmark_ticker])
+else:
+    benchmark_prices = pd.Series(dtype=float)
+
 # Clean up columns for single ticker
 if n_stocks == 1:
-    if isinstance(prices_raw.columns, pd.MultiIndex):
-        prices_raw = prices_raw.droplevel(0, axis=1) if prices_raw.columns.nlevels > 1 else prices_raw
-        prices_raw.columns = [selected_symbols[0]]
-    elif len(prices_raw.columns) == 1:
-        prices_raw.columns = [selected_symbols[0]]
+    prices_raw.columns = [selected_symbols[0]]
 else:
-    if isinstance(prices_raw.columns, pd.MultiIndex):
-        prices_raw.columns = prices_raw.columns.get_level_values(1)
-        prices_raw.columns = [c.replace(suffix, "") for c in prices_raw.columns]
+    # Always strip the suffix (e.g., '.NS') so columns match selected_symbols
+    prices_raw.columns = [str(c).replace(suffix, "") if suffix else str(c) for c in prices_raw.columns]
 
 # Keep only last `lookback_days` trading days
 prices_raw = prices_raw.dropna(how="all").tail(lookback_days)
@@ -1066,6 +1028,11 @@ returns_df = compute_returns(prices_raw)
 # COMPUTE VaR
 # ─────────────────────────────────────────────
 currency = "₹" if country == "India (NSE)" else "$"
+
+# Short-history check for Historical method
+if method == "Historical" and len(returns_df) < 252:
+    st.warning("⚠️ Insufficient History for Historical Risk Modeling (< 252 days). Falling back to Parametric VaR.")
+    method = "Parametric"
 
 if n_stocks == 1:
     sym = selected_symbols[0]
@@ -1095,104 +1062,102 @@ if n_stocks == 1:
 else:
     weights_arr = np.array(weights)
     rets_aligned = returns_df[selected_symbols].dropna()
-    result = portfolio_var(rets_aligned, weights_arr, conf, horizon)
-    daily_var_pct = portfolio_var(rets_aligned, weights_arr, conf, 1)["var_pct"]
+    port_ret_series = rets_aligned @ weights_arr
+    
+    if method == "Parametric":
+        # portfolio_var provides diversification benefit metrics which are nice, but let's just use it to get the VaR
+        result = portfolio_var(rets_aligned, weights_arr, conf, horizon)
+        daily_var_pct = portfolio_var(rets_aligned, weights_arr, conf, 1)["var_pct"]
+    elif method == "Historical":
+        result = historical_var(port_ret_series, conf, horizon)
+        daily_var_pct = historical_var(port_ret_series, conf, 1)["var_pct"]
+    else:
+        result = monte_carlo_var(port_ret_series, conf, horizon)
+        daily_var_pct = monte_carlo_var(port_ret_series, conf, 1)["var_pct"]
     
     var_pct  = result["var_pct"]
     cvar_pct = result["cvar_pct"]
     var_amt  = var_pct  * position_size
     cvar_amt = cvar_pct * position_size
     cutoff_price = position_size * (1 - var_pct)
-    port_ret_series = rets_aligned @ weights_arr
     ann_vol  = port_ret_series.std() * np.sqrt(252)
     ann_ret  = port_ret_series.mean() * 252
     dist     = distribution_stats(port_ret_series)
     bt       = backtest_var(port_ret_series, daily_var_pct, conf)
 
+final_rets = rets if n_stocks == 1 else port_ret_series
+if not benchmark_prices.empty:
+    benchmark_rets = np.log(benchmark_prices / benchmark_prices.shift(1)).dropna()
+    
+    # Align dates
+    aligned = pd.concat([final_rets, benchmark_rets], axis=1).dropna()
+    if len(aligned) > 2:
+        cov_mat = np.cov(aligned.iloc[:, 0], aligned.iloc[:, 1])
+        beta = cov_mat[0, 1] / cov_mat[1, 1] if cov_mat[1, 1] != 0 else 1.0
+    else:
+        beta = 1.0
+
+    if method == "Parametric":
+        bm_var_pct = parametric_var(benchmark_rets, conf, horizon)["var_pct"]
+    elif method == "Historical":
+        bm_var_pct = historical_var(benchmark_rets, conf, horizon)["var_pct"]
+    else:
+        bm_var_pct = monte_carlo_var(benchmark_rets, conf, horizon)["var_pct"]
+else:
+    beta = 1.0
+    bm_var_pct = var_pct  # fallback
 
 # ─────────────────────────────────────────────
 # METRIC CARDS
 # ─────────────────────────────────────────────
 st.markdown('<div class="section-header">Risk summary</div>', unsafe_allow_html=True)
 
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Traffic Light VaR Logic
+if bm_var_pct > 0:
+    var_ratio = var_pct / bm_var_pct
+else:
+    var_ratio = 1.0
+
+if var_ratio < 1.0:
+    traffic_light = "🟢 Low Risk"
+elif var_ratio <= 1.5:
+    traffic_light = "🟡 Moderate Risk"
+else:
+    traffic_light = "🔴 High Risk"
+
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.metric(
-        label=f"VaR ({conf_label}, {horizon}d)",
+        label=f"Value at Risk (95%)",
         value=format_currency(var_amt, currency),
-        delta=f"{var_pct*100:.2f}% of position",
-        delta_color="inverse",
-        help="The maximum expected loss under normal market conditions for the given confidence and horizon."
+        delta=f"{traffic_light} vs. Benchmark",
+        delta_color="off"
     )
 with col2:
     st.metric(
-        label=f"CVaR / ES ({conf_label})",
+        label=f"Expected Shortfall (CVaR)",
         value=format_currency(cvar_amt, currency),
         delta=f"{cvar_pct*100:.2f}% of position",
-        delta_color="inverse",
-        help="Expected Shortfall: The average expected loss on the worst days (the ones beyond VaR)."
+        delta_color="inverse"
     )
 with col3:
+    bm_name = "Nifty 50" if country == "India (NSE)" else "S&P 500"
     st.metric(
-        label="VaR cutoff value",
-        value=format_currency(cutoff_price, currency),
-        delta=f"Floor for {horizon}d hold",
-        delta_color="off",
-        help="Your portfolio value after the VaR loss."
-    )
-with col4:
-    st.metric(
-        label="Annualised vol.",
-        value=f"{ann_vol*100:.1f}%",
-        delta="252-day scaled",
-        delta_color="off",
-        help="A measure of how wildly the price swings. >20% is typically considered high volatility."
-    )
-with col5:
-    st.metric(
-        label="Annualised ret.",
-        value=f"{ann_ret*100:.1f}%",
-        delta=f"{len(returns_df)} days",
-        delta_color="normal",
-    )
-
-with col6:
-    sharpe_ratio = (ann_ret - risk_free_rate) / ann_vol if ann_vol > 0 else 0.0
-    st.metric(
-        label="Sharpe Ratio",
-        value=f"{sharpe_ratio:.2f}",
-        delta=f"RF Rate: {risk_free_rate*100:.1f}%",
-        delta_color="off",
-        help="Risk-adjusted return. >1.0 is considered good. Computed as (Ann. Return - Risk-Free Rate) / Ann. Volatility."
+        label=f"Beta vs. {bm_name}",
+        value=f"{beta:.2f}",
+        delta="1.0 = Market Volatility",
+        delta_color="off"
     )
 
 # --- Natural Language Summary ---
 summary_name = "your portfolio" if n_stocks > 1 else selected_symbols[0]
 st.markdown(f"""
-<div class="info-box" style="font-size:1.05rem; padding:1.2rem; margin-top:1rem; border-left-color: #0c5460; background: #d1ecf1;">
+<div style="font-size:1.05rem; padding:1.2rem; margin-top:1rem; border-left: 4px solid #0c5460; background: #1a1a2e;">
     💡 <strong>What this means for you:</strong> With {conf_label} confidence, your {format_currency(position_size, currency)} position in {summary_name} 
     could lose up to <strong>{format_currency(var_amt, currency)}</strong> over the next <strong>{horizon} trading day(s)</strong>. 
-    On the absolute worst {100-conf*100:.1f}% of periods, you'd lose an average of <strong>{format_currency(cvar_amt, currency)}</strong>.
-</div>
-""", unsafe_allow_html=True)
-
-# --- Risk Score Gauge ---
-raw_score = (ann_vol * 100 / 8) + max(0, dist["excess_kurtosis"] / 1.5) + (var_pct * 100 / (horizon ** 0.5) / 2)
-risk_score = min(10, max(1, int(round(raw_score))))
-score_color = "🟢 Conservative" if risk_score <= 3 else "🟡 Moderate" if risk_score <= 6 else "🔴 Aggressive"
-score_hex = "#2ca02c" if risk_score <= 3 else "#ff9800" if risk_score <= 6 else "#d62728"
-
-st.markdown(f"""
-<div style="margin-top:1rem; padding:1rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:10px;">
-    <div style="font-size:0.85rem; color:#adb5bd; margin-bottom:5px;">Overall Risk Score (1-10)</div>
-    <div style="display:flex; align-items:center; gap:15px;">
-        <div style="font-size:2rem; font-weight:800; color:{score_hex};">{risk_score}/10</div>
-        <div style="font-size:1.2rem; font-weight:600; color:{score_hex};">{score_color}</div>
-    </div>
-    <div style="width:100%; height:8px; background:#333; border-radius:4px; margin-top:10px; overflow:hidden; display:flex;">
-        <div style="height:100%; width:{risk_score*10}%; background:{score_hex};"></div>
-    </div>
+    On the absolute worst {100-conf*100:.1f}% of periods, you'd lose an average of <strong>{format_currency(cvar_amt, currency)}</strong>.<br><br>
+    <small style="color: #adb5bd;"><em>Note: VaR is an estimate under normal market conditions. Black Swan events can exceed these estimates.</em></small>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1372,20 +1337,21 @@ bt_sym = selected_symbols[0] if n_stocks == 1 else "Portfolio"
 fig_bt = plot_backtest(bt_ret, daily_var_pct, bt_sym)
 st.plotly_chart(fig_bt, use_container_width=True)
 
-breach_summary = backtest_var(bt_ret, daily_var_pct, conf)
-b_col1, b_col2, b_col3 = st.columns(3)
-with b_col1:
-    st.metric("Total breach days", breach_summary["breaches"])
-with b_col2:
-    st.metric("Observed breach rate", f"{breach_summary['breach_rate']*100:.2f}%",
-              delta=f"Expected: {breach_summary['expected_rate']*100:.1f}%",
-              delta_color="off")
-with b_col3:
-    pv = breach_summary["pof_pvalue"]
-    validity = "✓ Valid" if (not np.isnan(pv) and pv > 0.05) else "✗ Rejected"
-    st.metric("Kupiec test", validity,
-              delta=f"p = {pv:.3f}" if not np.isnan(pv) else "N/A",
-              delta_color="off")
+with st.expander("Audit & Backtest Metrics"):
+    breach_summary = backtest_var(bt_ret, daily_var_pct, conf)
+    b_col1, b_col2, b_col3 = st.columns(3)
+    with b_col1:
+        st.metric("Total breach days", breach_summary["breaches"])
+    with b_col2:
+        st.metric("Observed breach rate", f"{breach_summary['breach_rate']*100:.2f}%",
+                  delta=f"Expected: {breach_summary['expected_rate']*100:.1f}%",
+                  delta_color="off")
+    with b_col3:
+        pv = breach_summary["pof_pvalue"]
+        validity = "✓ Valid" if (not np.isnan(pv) and pv > 0.05) else "✗ Rejected"
+        st.metric("Kupiec test", validity,
+                  delta=f"p = {pv:.3f}" if not np.isnan(pv) else "N/A",
+                  delta_color="off")
 
 
 # ─────────────────────────────────────────────
