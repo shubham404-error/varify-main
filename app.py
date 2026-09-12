@@ -839,29 +839,29 @@ def guide_page():
     st.markdown("""
     Welcome to VaRify, the institutional-grade Value at Risk (VaR) and portfolio risk analytics terminal.
     
-    ### ?? Intended Outputs
+    ### 🎯 Intended Outputs
     - **Value at Risk (VaR):** The maximum expected loss over a specific timeframe at a given confidence level.
     - **Expected Shortfall (CVaR):** The average expected loss *if* the VaR threshold is breached (the "tail risk").
     - **Portfolio Beta:** How volatile your portfolio is compared to the Nifty 50 benchmark.
     - **Risk Distribution:** A visual histogram showing the spread of historical daily returns and the exact VaR cutoff (the glowing red line).
     
-    ### ?? Required Inputs
+    ### 📥 Required Inputs
     - **Tickers & Weights:** Enter the stock symbols (with .NS suffix for NSE) and their relative weights.
     - **Total Investment:** The total Rupee value of your portfolio (used to translate percentage risk into actual Rupee risk).
     - **Confidence Level:** Usually 95% or 99%. A 95% confidence level means you expect losses to exceed the VaR amount only 5% of the time (about 1 day in a trading month).
     - **Historical Lookback:** How much historical data the model uses to simulate risk (1 year to 5 years).
     
-    ### ?? Best Practices
+    ### 💡 Best Practices
     - The "Traffic Light" system on the VaR card instantly tells you if your portfolio is riskier than the broader market (Red = High Risk, Green = Market-aligned or safer).
     - Use the **Audit & Backtest Metrics** expander to check if the risk model actually held up during historical crashes.
     """)
 
 pages = {
     "Start": [
-        st.Page(guide_page, title="User Guide", icon="??", default=True)
+        st.Page(guide_page, title="User Guide", icon="📖", default=True)
     ],
     "Tools": [
-        st.Page(main_page, title="Risk Terminal", icon="???")
+        st.Page(main_page, title="Risk Terminal", icon="📉")
     ]
 }
 
