@@ -835,26 +835,78 @@ def main_page():
     
 
 def guide_page():
-    st.title("User Guide: VaRify Risk Terminal")
+    st.title("📖 VaRify User Guide")
+    st.markdown("#### Institutional-grade Value at Risk (VaR) & Portfolio Risk Analytics")
+    
+    st.info("👋 **Welcome!** VaRify helps you quantify downside risk in your portfolio using industry-standard statistical models. Read below to understand the metrics and methodologies before diving into the Risk Terminal.")
+    
+    st.markdown("---")
+    
+    st.subheader("📊 1. Core Risk Metrics Explained")
+    tab1, tab2, tab3 = st.tabs(["Value at Risk (VaR)", "Expected Shortfall (CVaR)", "Portfolio Beta"])
+    
+    with tab1:
+        st.markdown("**Value at Risk (VaR)** answers a simple question:")
+        st.markdown("> *“What is the most I can expect to lose in a day with X% confidence?”*")
+        st.markdown("""
+        If your 1-day 95% VaR is **₹50,000**, it means that under normal market conditions, there is only a **5% chance** (or about 1 day out of every 20) that your portfolio will lose more than ₹50,000.
+        """)
+        
+    with tab2:
+        st.markdown("**Expected Shortfall (CVaR / Conditional VaR)** answers the follow-up question:")
+        st.markdown("> *“If the worst-case scenario happens, how bad will it be?”*")
+        st.markdown("""
+        VaR tells you the threshold, but CVaR tells you the *average loss* beyond that threshold. It is a more robust metric for capturing extreme "tail risks" (Black Swan events).
+        """)
+        
+    with tab3:
+        st.markdown("**Beta** measures your portfolio's volatility relative to the broader market (e.g., Nifty 50 or S&P 500).")
+        st.markdown("""
+        - **Beta = 1.0**: Your portfolio moves in tandem with the market.
+        - **Beta > 1.0**: Your portfolio is more volatile than the market (higher risk, higher potential reward).
+        - **Beta < 1.0**: Your portfolio is less volatile than the market (defensive).
+        """)
+
+    st.markdown("---")
+    
+    st.subheader("🚦 2. The Traffic Light Risk System")
+    st.markdown("VaRify automatically compares your portfolio's VaR against the benchmark index (Nifty 50 or S&P 500) to give you an intuitive visual risk assessment.")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.error("**🔴 High Risk**\n\nYour Portfolio VaR is **> 1.5x** the Market VaR.")
+    with col2:
+        st.warning("**🟡 Moderate Risk**\n\nYour Portfolio VaR is **1.0x to 1.5x** the Market VaR.")
+    with col3:
+        st.success("**🟢 Low Risk**\n\nYour Portfolio VaR is **less than** the Market VaR.")
+
+    st.markdown("---")
+    
+    st.subheader("🧮 3. VaR Methodologies")
+    with st.expander("Explore the 3 Mathematical Models", expanded=False):
+        m_col1, m_col2, m_col3 = st.columns(3)
+        with m_col1:
+            st.markdown("#### 1. Parametric")
+            st.markdown("Assumes returns follow a normal (bell-curve) distribution. Fast and standard, but may underestimate extreme risks if the asset has 'fat tails'.")
+        with m_col2:
+            st.markdown("#### 2. Historical")
+            st.markdown("Uses actual historical daily returns to find the 5% worst days. Makes no assumptions about distribution shape, but relies entirely on past data.")
+        with m_col3:
+            st.markdown("#### 3. Monte Carlo")
+            st.markdown("Simulates 10,000 possible future return paths based on historical mean and volatility. Excellent for visualizing a wide range of potential outcomes.")
+
+    st.markdown("---")
+    
+    st.subheader("🛠️ 4. How to Use the Terminal")
     st.markdown("""
-    Welcome to VaRify, the institutional-grade Value at Risk (VaR) and portfolio risk analytics terminal.
-    
-    ### 🎯 Intended Outputs
-    - **Value at Risk (VaR):** The maximum expected loss over a specific timeframe at a given confidence level.
-    - **Expected Shortfall (CVaR):** The average expected loss *if* the VaR threshold is breached (the "tail risk").
-    - **Portfolio Beta:** How volatile your portfolio is compared to the Nifty 50 benchmark.
-    - **Risk Distribution:** A visual histogram showing the spread of historical daily returns and the exact VaR cutoff (the glowing red line).
-    
-    ### 📥 Required Inputs
-    - **Tickers & Weights:** Enter the stock symbols (with .NS suffix for NSE) and their relative weights.
-    - **Total Investment:** The total Rupee value of your portfolio (used to translate percentage risk into actual Rupee risk).
-    - **Confidence Level:** Usually 95% or 99%. A 95% confidence level means you expect losses to exceed the VaR amount only 5% of the time (about 1 day in a trading month).
-    - **Historical Lookback:** How much historical data the model uses to simulate risk (1 year to 5 years).
-    
-    ### 💡 Best Practices
-    - The "Traffic Light" system on the VaR card instantly tells you if your portfolio is riskier than the broader market (Red = High Risk, Green = Market-aligned or safer).
-    - Use the **Audit & Backtest Metrics** expander to check if the risk model actually held up during historical crashes.
+    1. **Navigate** to the **Risk Terminal** using the sidebar.
+    2. **Select your Assets**: Choose your country (India or US) and select up to 5 tickers.
+    3. **Configure Portfolio**: Enter your total position size and allocate percentage weights for each ticker (must sum to 100%).
+    4. **Tune Parameters**: Adjust Confidence Level, Holding Period, and Historical Lookback.
+    5. **Calculate**: Hit the `▶ Calculate VaR` button to generate your dashboard.
     """)
+    
+    st.info("💡 **Pro Tip**: Use the **Audit & Backtest Metrics** expander in the terminal to view the Kupiec POF test. This statistical test backtests the VaR model against historical data to tell you if the model is mathematically valid.")
 
 pages = {
     "Start": [
