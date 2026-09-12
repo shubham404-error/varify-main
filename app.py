@@ -19,23 +19,22 @@ from charts import COLORS, plot_intraday, plot_distribution, plot_price_with_var
 
 warnings.filterwarnings("ignore")
 
+# ─────────────────────────────────────────────
+# GLOBAL PAGE CONFIG & STYLES
+# ─────────────────────────────────────────────
+st.set_page_config(
+    page_title="VaRify",
+    page_icon="📉",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+inject_styles()
+
 def main_page():
     """
     Value at Risk (VaR) Calculator
     Portfolio Risk Analytics Tool | Built with Streamlit + yfinance
     """
-    # ─────────────────────────────────────────────
-    # PAGE CONFIG
-    # ─────────────────────────────────────────────
-    st.set_page_config(
-        page_title="VaRify",
-        page_icon="📉",
-        layout="wide",
-        initial_sidebar_state="expanded",
-    )
-    
-    inject_styles()
-    
     with st.sidebar:
         st.markdown("## 📉 VaR Calculator")
         st.markdown("---")
@@ -835,78 +834,206 @@ def main_page():
     
 
 def guide_page():
-    st.title("📖 VaRify User Guide")
-    st.markdown("#### Institutional-grade Value at Risk (VaR) & Portfolio Risk Analytics")
-    
-    st.info("👋 **Welcome!** VaRify helps you quantify downside risk in your portfolio using industry-standard statistical models. Read below to understand the metrics and methodologies before diving into the Risk Terminal.")
-    
-    st.markdown("---")
-    
-    st.subheader("📊 1. Core Risk Metrics Explained")
-    tab1, tab2, tab3 = st.tabs(["Value at Risk (VaR)", "Expected Shortfall (CVaR)", "Portfolio Beta"])
-    
-    with tab1:
-        st.markdown("**Value at Risk (VaR)** answers a simple question:")
-        st.markdown("> *“What is the most I can expect to lose in a day with X% confidence?”*")
-        st.markdown("""
-        If your 1-day 95% VaR is **₹50,000**, it means that under normal market conditions, there is only a **5% chance** (or about 1 day out of every 20) that your portfolio will lose more than ₹50,000.
-        """)
-        
-    with tab2:
-        st.markdown("**Expected Shortfall (CVaR / Conditional VaR)** answers the follow-up question:")
-        st.markdown("> *“If the worst-case scenario happens, how bad will it be?”*")
-        st.markdown("""
-        VaR tells you the threshold, but CVaR tells you the *average loss* beyond that threshold. It is a more robust metric for capturing extreme "tail risks" (Black Swan events).
-        """)
-        
-    with tab3:
-        st.markdown("**Beta** measures your portfolio's volatility relative to the broader market (e.g., Nifty 50 or S&P 500).")
-        st.markdown("""
-        - **Beta = 1.0**: Your portfolio moves in tandem with the market.
-        - **Beta > 1.0**: Your portfolio is more volatile than the market (higher risk, higher potential reward).
-        - **Beta < 1.0**: Your portfolio is less volatile than the market (defensive).
-        """)
-
-    st.markdown("---")
-    
-    st.subheader("🚦 2. The Traffic Light Risk System")
-    st.markdown("VaRify automatically compares your portfolio's VaR against the benchmark index (Nifty 50 or S&P 500) to give you an intuitive visual risk assessment.")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.error("**🔴 High Risk**\n\nYour Portfolio VaR is **> 1.5x** the Market VaR.")
-    with col2:
-        st.warning("**🟡 Moderate Risk**\n\nYour Portfolio VaR is **1.0x to 1.5x** the Market VaR.")
-    with col3:
-        st.success("**🟢 Low Risk**\n\nYour Portfolio VaR is **less than** the Market VaR.")
-
-    st.markdown("---")
-    
-    st.subheader("🧮 3. VaR Methodologies")
-    with st.expander("Explore the 3 Mathematical Models", expanded=False):
-        m_col1, m_col2, m_col3 = st.columns(3)
-        with m_col1:
-            st.markdown("#### 1. Parametric")
-            st.markdown("Assumes returns follow a normal (bell-curve) distribution. Fast and standard, but may underestimate extreme risks if the asset has 'fat tails'.")
-        with m_col2:
-            st.markdown("#### 2. Historical")
-            st.markdown("Uses actual historical daily returns to find the 5% worst days. Makes no assumptions about distribution shape, but relies entirely on past data.")
-        with m_col3:
-            st.markdown("#### 3. Monte Carlo")
-            st.markdown("Simulates 10,000 possible future return paths based on historical mean and volatility. Excellent for visualizing a wide range of potential outcomes.")
-
-    st.markdown("---")
-    
-    st.subheader("🛠️ 4. How to Use the Terminal")
     st.markdown("""
-    1. **Navigate** to the **Risk Terminal** using the sidebar.
-    2. **Select your Assets**: Choose your country (India or US) and select up to 5 tickers.
-    3. **Configure Portfolio**: Enter your total position size and allocate percentage weights for each ticker (must sum to 100%).
-    4. **Tune Parameters**: Adjust Confidence Level, Holding Period, and Historical Lookback.
-    5. **Calculate**: Hit the `▶ Calculate VaR` button to generate your dashboard.
-    """)
+    <style>
+    .guide-header {
+        text-align: center;
+        padding: 3rem 0 2rem 0;
+        background: linear-gradient(180deg, rgba(30,136,229,0.1) 0%, rgba(18,18,18,0) 100%);
+        border-radius: 20px;
+        margin-bottom: 2.5rem;
+    }
+    .guide-title {
+        font-family: 'Clash Display', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: -webkit-linear-gradient(45deg, #64b5f6, #1e88e5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .guide-subtitle {
+        color: #9e9e9e;
+        font-size: 1.15rem;
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3.5rem;
+    }
+    .bento-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 1.8rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .bento-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.15);
+    }
+    .card-icon {
+        font-size: 2.2rem;
+        margin-bottom: 1.2rem;
+    }
+    .card-title {
+        font-family: 'Clash Display', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.8rem;
+    }
+    .card-text {
+        color: #b0bec5;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    .highlight-text {
+        color: #64b5f6;
+        font-weight: 600;
+    }
+    .traffic-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        margin-top: 1.5rem;
+    }
+    .traffic-pill {
+        border-radius: 12px;
+        padding: 1rem 0.5rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .pill-red { background: rgba(244, 67, 54, 0.1); color: #ef5350; border: 1px solid rgba(244, 67, 54, 0.3); }
+    .pill-yellow { background: rgba(255, 152, 0, 0.1); color: #ffb74d; border: 1px solid rgba(255, 152, 0, 0.3); }
+    .pill-green { background: rgba(76, 175, 80, 0.1); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
+    .step-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.2rem;
+        margin-bottom: 1.2rem;
+        background: rgba(255,255,255,0.02);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .step-number {
+        background: linear-gradient(135deg, #1e88e5, #1565c0);
+        color: white;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(30,136,229,0.4);
+    }
+    .step-content h4 {
+        margin: 0 0 0.5rem 0;
+        color: white;
+        font-family: 'Clash Display', sans-serif;
+        font-size: 1.2rem;
+    }
+    .step-content p {
+        margin: 0;
+        color: #9e9e9e;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    </style>
     
-    st.info("💡 **Pro Tip**: Use the **Audit & Backtest Metrics** expander in the terminal to view the Kupiec POF test. This statistical test backtests the VaR model against historical data to tell you if the model is mathematically valid.")
+    <div class="guide-header">
+        <div class="guide-title">VaRify Risk Terminal</div>
+        <div class="guide-subtitle">Institutional-grade portfolio analytics, simplified for retail investors. Measure downside risk with precision.</div>
+    </div>
+    
+    <h2 style="font-family:'Clash Display',sans-serif; margin-bottom:1.5rem; font-size:1.8rem;">Core Risk Metrics</h2>
+    <div class="bento-grid">
+        <div class="bento-card">
+            <div class="card-icon">📉</div>
+            <div class="card-title">Value at Risk (VaR)</div>
+            <div class="card-text">
+                Answers: <em>"What is the most I can expect to lose in a day?"</em><br><br>
+                If your 1-day 95% VaR is ₹50,000, there is only a <span class="highlight-text">5% chance</span> your portfolio will lose more than ₹50,000 under normal market conditions.
+            </div>
+        </div>
+        <div class="bento-card">
+            <div class="card-icon">🚨</div>
+            <div class="card-title">Expected Shortfall (CVaR)</div>
+            <div class="card-text">
+                Answers: <em>"If the worst-case scenario happens, how bad will it be?"</em><br><br>
+                CVaR calculates the <span class="highlight-text">average loss</span> beyond the VaR threshold. It captures extreme Black Swan tail risks that VaR ignores.
+            </div>
+        </div>
+        <div class="bento-card">
+            <div class="card-icon">⚖️</div>
+            <div class="card-title">Portfolio Beta</div>
+            <div class="card-text">
+                Measures volatility relative to the market index.<br><br>
+                <strong style="color:white">Beta = 1.0:</strong> Moves with market.<br>
+                <strong style="color:#ef5350">Beta &gt; 1.0:</strong> Higher volatility (Riskier).<br>
+                <strong style="color:#81c784">Beta &lt; 1.0:</strong> Lower volatility (Defensive).
+            </div>
+        </div>
+    </div>
+    
+    <h2 style="font-family:'Clash Display',sans-serif; margin-bottom:1.5rem; font-size:1.8rem;">Models & Benchmarking</h2>
+    <div class="bento-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+        <div class="bento-card">
+            <div class="card-title">🧮 Mathematical Models</div>
+            <div class="card-text" style="margin-top:1.2rem;">
+                <strong style="color:white; font-family:'Inter', sans-serif;">Parametric:</strong> Assumes normal bell-curve distributions. Fast, but may underestimate 'fat tails'.<br><br>
+                <strong style="color:white; font-family:'Inter', sans-serif;">Historical:</strong> Looks strictly at past returns to find the 5% worst days. Makes no assumptions about distribution shape.<br><br>
+                <strong style="color:white; font-family:'Inter', sans-serif;">Monte Carlo:</strong> Simulates 10,000 randomized future paths. Excellent for stress-testing complex portfolios.
+            </div>
+        </div>
+        <div class="bento-card">
+            <div class="card-title">🚦 Traffic Light System</div>
+            <div class="card-text" style="margin-top:1.2rem;">
+                VaRify automatically compares your Portfolio's VaR against the benchmark Market VaR to give you an instant risk assessment.
+            </div>
+            <div class="traffic-grid">
+                <div class="traffic-pill pill-red">High Risk<br><span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">Port &gt; 1.5x Mkt</span></div>
+                <div class="traffic-pill pill-yellow">Moderate<br><span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">Port ~ 1.2x Mkt</span></div>
+                <div class="traffic-pill pill-green">Low Risk<br><span style="font-size:0.75rem; font-weight:normal; opacity:0.8;">Port &lt; Market</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <h2 style="font-family:'Clash Display',sans-serif; margin-bottom:1.5rem; font-size:1.8rem;">Quick Start Guide</h2>
+    
+    <div class="step-box">
+        <div class="step-number">1</div>
+        <div class="step-content">
+            <h4>Select Your Market & Assets</h4>
+            <p>Choose between Indian (NSE) or US markets in the sidebar. Select up to 5 stock tickers to build your portfolio.</p>
+        </div>
+    </div>
+    <div class="step-box">
+        <div class="step-number">2</div>
+        <div class="step-content">
+            <h4>Configure Capital & Weights</h4>
+            <p>Enter your total investment size (e.g., ₹1,000,000) and allocate percentage weights for each stock so they sum to exactly 100%.</p>
+        </div>
+    </div>
+    <div class="step-box">
+        <div class="step-number">3</div>
+        <div class="step-content">
+            <h4>Calculate & Analyze</h4>
+            <p>Hit <strong>Calculate VaR</strong>. Review your top-line metrics, observe the glowing VaR cutoff on the distribution chart, and check the Diversification Benefit matrix.</p>
+        </div>
+    </div>
+    <br><br>
+    """, unsafe_allow_html=True)
 
 pages = {
     "Start": [
