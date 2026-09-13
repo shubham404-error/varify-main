@@ -335,6 +335,27 @@ def main_page():
     else:
         # Always strip the suffix (e.g., '.NS') so columns match selected_symbols
         prices_raw.columns = [str(c).replace(suffix, "") if suffix else str(c) for c in prices_raw.columns]
+        
+    # Filter selected_symbols and weights based on what actually downloaded
+    valid_symbols = []
+    valid_weights = []
+    for i, s in enumerate(selected_symbols):
+        if s in prices_raw.columns:
+            valid_symbols.append(s)
+            if n_stocks > 1:
+                valid_weights.append(weights[i])
+                
+    if len(valid_symbols) == 0:
+        st.error("Could not fetch data for any of the selected stocks.")
+        st.stop()
+        
+    if len(valid_symbols) < len(selected_symbols):
+        st.warning(f"Could not fetch data for {len(selected_symbols) - len(valid_symbols)} stock(s). They have been excluded.")
+        selected_symbols = valid_symbols
+        if n_stocks > 1:
+            w_sum = sum(valid_weights)
+            weights = [w / w_sum for w in valid_weights] if w_sum > 0 else valid_weights
+        n_stocks = len(selected_symbols)
     
     # Keep only last `lookback_days` trading days
     prices_raw = prices_raw.dropna(how="all").tail(lookback_days)
